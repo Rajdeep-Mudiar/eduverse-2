@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, BarChart3, BookOpen, Gamepad2, Video, Rocket, Robot, Music, SunMoon } from 'lucide-react';
+import { Home, BarChart3, BookOpen, Gamepad2, Video, Rocket, Bot, Music, SunMoon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -40,7 +40,7 @@ const Sidebar = () => {
     { icon: Video, label: "Live Webinars", path: "/webinars" },
     { icon: Rocket, label: "AI-Powered Quiz", path: "/quiz" },
     { icon: Music, label: "Audio Learning", path: "/audio" },
-    { icon: Robot, label: "AI Tutor", path: "/ai-tutor" },
+    { icon: Bot, label: "AI Tutor", path: "/ai-tutor" },
   ];
 
   return (

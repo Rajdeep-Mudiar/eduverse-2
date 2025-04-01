@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Robot, Brain } from "lucide-react";
+import { Send, Bot, Brain } from "lucide-react";
 import AIChatMessage from "@/components/AIChatMessage";
 
 interface Message {
@@ -78,7 +78,7 @@ const AITutor = () => {
         <div className="edu-card mb-6 p-6 text-center">
           <div className="flex justify-center mb-4">
             <div className="p-4 bg-purple-100 dark:bg-purple-900 rounded-full">
-              <Robot className="h-10 w-10 text-eduverse-purple" />
+              <Bot className="h-10 w-10 text-eduverse-purple" />
             </div>
           </div>
           <h1 className="text-2xl font-bold mb-2">AI Learning Assistant</h1>
