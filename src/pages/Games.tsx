@@ -3,37 +3,43 @@ import SearchInput from "@/components/SearchInput";
 import GameCard from "@/components/GameCard";
 
 const Games = () => {
-  // Sample game data
+  // Sample game data with difficulty levels
   const games = [
     {
       title: "Brain Teasers",
       description: "Challenge your mind with puzzles.",
-      image: "https://via.placeholder.com/300x200?text=Puzzle+Game"
+      image: "https://via.placeholder.com/300x200?text=Puzzle+Game",
+      difficulty: "beginner" as const
     },
     {
       title: "Math Mania",
       description: "Fun math problems to solve.",
-      image: "https://via.placeholder.com/300x200?text=Math+Game"
+      image: "https://via.placeholder.com/300x200?text=Math+Game",
+      difficulty: "intermediate" as const
     },
     {
       title: "Chess Master",
       description: "Test your strategy skills in chess.",
-      image: "https://via.placeholder.com/300x200?text=Chess"
+      image: "https://via.placeholder.com/300x200?text=Chess",
+      difficulty: "advanced" as const
     },
     {
       title: "Space Invaders",
       description: "Classic arcade shooting game.",
-      image: "https://via.placeholder.com/300x200?text=Action+Game"
+      image: "https://via.placeholder.com/300x200?text=Action+Game",
+      difficulty: "beginner" as const
     },
     {
       title: "Word Scramble",
       description: "Improve your vocabulary skills.",
-      image: "https://via.placeholder.com/300x200?text=Word+Game"
+      image: "https://via.placeholder.com/300x200?text=Word+Game",
+      difficulty: "intermediate" as const
     },
     {
       title: "Physics Playground",
       description: "Learn science through experiments.",
-      image: "https://via.placeholder.com/300x200?text=Science+Game"
+      image: "https://via.placeholder.com/300x200?text=Science+Game",
+      difficulty: "advanced" as const
     }
   ];
 
@@ -50,6 +56,7 @@ const Games = () => {
             title={game.title}
             description={game.description}
             image={game.image}
+            difficulty={game.difficulty}
           />
         ))}
       </div>

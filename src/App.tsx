@@ -15,6 +15,7 @@ import Games from "./pages/Games";
 import Webinars from "./pages/Webinars";
 import Quiz from "./pages/Quiz";
 import AudioLearning from "./pages/AudioLearning";
+import AITutor from "./pages/AITutor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
                 <Route path="/webinars" element={<Webinars />} />
                 <Route path="/quiz" element={<Quiz />} />
                 <Route path="/audio" element={<AudioLearning />} />
+                <Route path="/ai-tutor" element={<AITutor />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
