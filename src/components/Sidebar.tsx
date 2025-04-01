@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, BarChart3, BookOpen, Gamepad2, Video, Rocket, Bot, Music, SunMoon } from 'lucide-react';
+import { Home, BarChart3, BookOpen, Gamepad2, Video, Rocket, Bot, Music, SunMoon, Trophy, MessageCircle, Brain, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -38,6 +38,10 @@ const Sidebar = () => {
     { icon: BookOpen, label: "Courses", path: "/courses" },
     { icon: Gamepad2, label: "Games", path: "/games" },
     { icon: Video, label: "Live Webinars", path: "/webinars" },
+    { icon: Trophy, label: "Leaderboard", path: "/leaderboard" },
+    { icon: MessageCircle, label: "Community", path: "/community" },
+    { icon: Brain, label: "Learning Tools", path: "/learning-tools" },
+    { icon: FileText, label: "Smart Notes", path: "/smart-notes" },
     { icon: Rocket, label: "AI-Powered Quiz", path: "/quiz" },
     { icon: Music, label: "Audio Learning", path: "/audio" },
     { icon: Bot, label: "AI Tutor", path: "/ai-tutor" },
@@ -45,7 +49,7 @@ const Sidebar = () => {
 
   return (
     <div className={cn(
-      "h-screen border-r bg-white dark:bg-eduverse-black dark:border-gray-800 flex flex-col transition-all",
+      "h-screen border-r bg-white dark:bg-eduverse-black dark:border-gray-800 flex flex-col transition-all overflow-auto",
       isCollapsed ? "w-20" : "w-64"
     )}>
       <div className="p-4 flex items-center gap-3">

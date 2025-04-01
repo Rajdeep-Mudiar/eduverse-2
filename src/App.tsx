@@ -17,6 +17,10 @@ import Quiz from "./pages/Quiz";
 import AudioLearning from "./pages/AudioLearning";
 import AITutor from "./pages/AITutor";
 import NotFound from "./pages/NotFound";
+import Leaderboard from "./pages/Leaderboard";
+import Community from "./pages/Community";
+import LearningTools from "./pages/LearningTools";
+import SmartNotes from "./pages/SmartNotes";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +43,10 @@ const App = () => (
                 <Route path="/quiz" element={<Quiz />} />
                 <Route path="/audio" element={<AudioLearning />} />
                 <Route path="/ai-tutor" element={<AITutor />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/learning-tools" element={<LearningTools />} />
+                <Route path="/smart-notes" element={<SmartNotes />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

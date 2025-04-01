@@ -28,15 +28,6 @@ const learningData = [
   { day: 'Sun', hours: 2.1 },
 ];
 
-// Example leaderboard data
-const leaderboardData = [
-  { id: 1, name: "Alex Johnson", points: 1250, avatar: "https://via.placeholder.com/40" },
-  { id: 2, name: "Sarah Williams", points: 980, avatar: "https://via.placeholder.com/40" },
-  { id: 3, name: "Michael Brown", points: 875, avatar: "https://via.placeholder.com/40" },
-  { id: 4, name: "Emma Davis", points: 760, avatar: "https://via.placeholder.com/40" },
-  { id: 5, name: "You", points: 680, avatar: "https://via.placeholder.com/40", isCurrentUser: true },
-];
-
 // Example achievement badges
 const achievementBadges = [
   { id: 1, title: "Fast Learner", description: "Completed 3 courses in one week", icon: <Clock className="h-6 w-6 text-blue-500" /> },
@@ -118,10 +109,8 @@ const Dashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
                 <YAxis />
-                <ChartTooltip
+                <Tooltip
                   content={<ChartTooltipContent />}
-                  labelKey="day"
-                  nameKey="hours"
                   formatter={(value) => [`${value} hrs`, "Time Spent"]}
                 />
                 <Bar dataKey="hours" fill="var(--color-hours)" radius={[4, 4, 0, 0]} />
@@ -163,7 +152,7 @@ const Dashboard = () => {
       </div>
 
       {/* New Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* AI Recommendations */}
         <div className="edu-card">
           <div className="flex items-center justify-between mb-4">
@@ -222,41 +211,6 @@ const Dashboard = () => {
           <div className="bg-orange-50 dark:bg-gray-800 p-3 rounded-lg border border-orange-100 dark:border-gray-700 text-sm">
             <p className="text-center font-medium">🔥 <span className="text-orange-600 dark:text-orange-400">3 more days</span> to unlock the "10-Day Streak" badge!</p>
           </div>
-        </div>
-        
-        {/* Leaderboard */}
-        <div className="edu-card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Leaderboard</h2>
-            <div className="p-2 rounded-full bg-yellow-100 dark:bg-yellow-900">
-              <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            {leaderboardData.map((user, index) => (
-              <div 
-                key={user.id} 
-                className={`flex items-center p-2 rounded-lg ${user.isCurrentUser ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50" : ""}`}
-              >
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-sm font-bold mr-3">
-                  {index + 1}
-                </div>
-                <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full mr-3" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{user.name}</p>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm font-bold">{user.points}</span>
-                  <span className="text-xs text-gray-500 ml-1">pts</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <button className="w-full mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline">
-            View Full Leaderboard
-          </button>
         </div>
       </div>
       
