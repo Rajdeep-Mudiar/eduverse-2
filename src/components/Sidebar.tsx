@@ -1,7 +1,23 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, BarChart3, BookOpen, Gamepad2, Video, Rocket, Bot, Music, SunMoon, Trophy, MessageCircle, Brain, FileText } from 'lucide-react';
+import { 
+  Home, 
+  BarChart3, 
+  BookOpen, 
+  Gamepad2, 
+  Video, 
+  Rocket, 
+  Bot, 
+  Music, 
+  SunMoon, 
+  Trophy, 
+  MessageCircle, 
+  Brain, 
+  FileText,
+  Briefcase,
+  Code
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -42,6 +58,8 @@ const Sidebar = () => {
     { icon: MessageCircle, label: "Community", path: "/community" },
     { icon: Brain, label: "Learning Tools", path: "/learning-tools" },
     { icon: FileText, label: "Smart Notes", path: "/smart-notes" },
+    { icon: Briefcase, label: "Career Development", path: "/career-development" },
+    { icon: Code, label: "Coding Labs", path: "/coding-labs" },
     { icon: Rocket, label: "AI-Powered Quiz", path: "/quiz" },
     { icon: Music, label: "Audio Learning", path: "/audio" },
     { icon: Bot, label: "AI Tutor", path: "/ai-tutor" },

@@ -21,6 +21,8 @@ import Leaderboard from "./pages/Leaderboard";
 import Community from "./pages/Community";
 import LearningTools from "./pages/LearningTools";
 import SmartNotes from "./pages/SmartNotes";
+import CareerDevelopment from "./pages/CareerDevelopment";
+import CodingLabs from "./pages/CodingLabs";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,8 @@ const App = () => (
                 <Route path="/community" element={<Community />} />
                 <Route path="/learning-tools" element={<LearningTools />} />
                 <Route path="/smart-notes" element={<SmartNotes />} />
+                <Route path="/career-development" element={<CareerDevelopment />} />
+                <Route path="/coding-labs" element={<CodingLabs />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
