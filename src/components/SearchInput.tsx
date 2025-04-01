@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Search, Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
