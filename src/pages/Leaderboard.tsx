@@ -1,7 +1,8 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Flame, Trophy, Award, Medal, Users } from "lucide-react";
 
@@ -105,7 +106,10 @@ const LeaderboardPage = () => {
                     <CardHeader>
                       <CardTitle>
                         <div className="relative">
-                          <Avatar src={user.avatarUrl} alt={user.name} className="mx-auto h-16 w-16" />
+                          <Avatar className="mx-auto h-16 w-16">
+                            <AvatarImage src={user.avatarUrl} alt={user.name} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
                           {index === 0 && (
                             <Award className="absolute top-0 right-0 h-6 w-6 text-amber-500" />
                           )}
@@ -152,7 +156,10 @@ const LeaderboardPage = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <Avatar src={user.avatarUrl} alt={user.name} className="h-8 w-8 mr-2" />
+                            <Avatar className="h-8 w-8 mr-2">
+                              <AvatarImage src={user.avatarUrl} alt={user.name} />
+                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
                             <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</div>
                           </div>
                         </td>
@@ -214,7 +221,10 @@ const LeaderboardPage = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-4">
-              <Avatar src="https://i.pravatar.cc/150?img=11" alt="Your Avatar" className="h-12 w-12" />
+              <Avatar className="h-12 w-12">
+                <AvatarImage src="https://i.pravatar.cc/150?img=11" alt="Your Avatar" />
+                <AvatarFallback>YA</AvatarFallback>
+              </Avatar>
               <div>
                 <h3 className="text-lg font-semibold">Your Name</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
