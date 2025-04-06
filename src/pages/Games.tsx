@@ -1,6 +1,9 @@
 
 import SearchInput from "@/components/SearchInput";
 import GameCard from "@/components/GameCard";
+import PageTransition from "@/components/PageTransition";
+import { MotionContainer, MotionChild, MotionItem } from "@/components/MotionWrapper";
+import { ChevronDown } from "lucide-react";
 
 const Games = () => {
   // Sample game data with difficulty levels
@@ -44,41 +47,39 @@ const Games = () => {
   ];
 
   return (
-    <div className="container mx-auto p-6 animate-fade-in">
-      <h1 className="text-3xl font-bold mb-6">Play & Learn with Games</h1>
-      
-      <SearchInput placeholder="Search games..." className="mb-8" />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {games.map((game, index) => (
-          <GameCard
-            key={index}
-            title={game.title}
-            description={game.description}
-            image={game.image}
-            difficulty={game.difficulty}
-          />
-        ))}
+    <PageTransition>
+      <div className="container mx-auto p-6">
+        <MotionItem variant="slide" className="mb-6">
+          <h1 className="text-3xl font-bold">Play & Learn with Games</h1>
+        </MotionItem>
+        
+        <MotionItem variant="fade" delay={0.2} className="mb-8">
+          <SearchInput placeholder="Search games..." />
+        </MotionItem>
+        
+        <MotionContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {games.map((game, index) => (
+            <MotionChild key={index}>
+              <GameCard
+                title={game.title}
+                description={game.description}
+                image={game.image}
+                difficulty={game.difficulty}
+              />
+            </MotionChild>
+          ))}
+        </MotionContainer>
+        
+        <MotionItem variant="scale" delay={0.4}>
+          <div className="edu-card p-4 bg-green-600 hover:bg-green-700 transition-colors text-white text-center hover:scale-[1.02] transform transition-transform">
+            <button className="w-full flex items-center justify-center gap-2 text-lg font-medium">
+              <ChevronDown className="h-5 w-5 transition-transform group-hover:translate-y-1" />
+              Explore More
+            </button>
+          </div>
+        </MotionItem>
       </div>
-      
-      <div className="edu-card p-4 bg-green-600 hover:bg-green-700 transition-colors text-white text-center">
-        <button className="w-full flex items-center justify-center gap-2 text-lg font-medium">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Explore More
-        </button>
-      </div>
-    </div>
+    </PageTransition>
   );
 };
 
