@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
+  Home, 
   BarChart3, 
   BookOpen, 
   Gamepad2, 
@@ -48,6 +49,7 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
+    { icon: Home, label: "Home", path: "/" },
     { icon: BarChart3, label: "Dashboard", path: "/dashboard" },
     { icon: BookOpen, label: "Courses", path: "/courses" },
     { icon: Gamepad2, label: "Games", path: "/games" },

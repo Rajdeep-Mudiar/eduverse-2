@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { AnimatePresence } from "framer-motion";
 import Sidebar from "@/components/Sidebar";
-import NavBar from "@/components/NavBar";
 
 // Pages
 import Index from "./pages/Index";
@@ -25,23 +24,15 @@ import LearningTools from "./pages/LearningTools";
 import SmartNotes from "./pages/SmartNotes";
 import CareerDevelopment from "./pages/CareerDevelopment";
 import CodingLabs from "./pages/CodingLabs";
-import PublicHealth from "./pages/PublicHealth";
-import DisasterRelief from "./pages/DisasterRelief";
-import Education from "./pages/Education";
-import Services from "./pages/Services";
-import FAQs from "./pages/FAQs";
-import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
 
 // Animation wrapper component
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const isHomePage = location.pathname === "/";
   
   return (
     <AnimatePresence mode="wait">
-      {isHomePage && <NavBar />}
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
         <Route path="/dashboard" element={<Dashboard />} />
@@ -57,12 +48,6 @@ const AnimatedRoutes = () => {
         <Route path="/smart-notes" element={<SmartNotes />} />
         <Route path="/career-development" element={<CareerDevelopment />} />
         <Route path="/coding-labs" element={<CodingLabs />} />
-        <Route path="/public-health" element={<PublicHealth />} />
-        <Route path="/disaster-relief" element={<DisasterRelief />} />
-        <Route path="/education" element={<Education />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/faqs" element={<FAQs />} />
-        <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
@@ -78,7 +63,7 @@ const App = () => (
         <BrowserRouter>
           <div className="flex h-screen w-full">
             <Sidebar />
-            <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 flex flex-col">
+            <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
               <AnimatedRoutes />
             </div>
           </div>

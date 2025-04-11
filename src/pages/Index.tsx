@@ -8,7 +8,7 @@ import { MotionContainer, MotionChild } from "@/components/MotionWrapper";
 
 const Index = () => {
   return (
-    <PageTransition className="pt-4">
+    <PageTransition>
       <div className="container mx-auto p-6">
         <HeroSection />
 
