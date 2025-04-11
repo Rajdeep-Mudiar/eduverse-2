@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Gemini API key
@@ -75,8 +74,21 @@ export const generateContent = async (params: GeminiParams): Promise<GeminiRespo
   }
 };
 
-export const generateQuizQuestions = async (topic: string, count: number = 5): Promise<GeminiQuizQuestion[]> => {
-  const prompt = `Generate ${count} multiple-choice quiz questions about ${topic}. Format the response as a valid JSON array with the following structure:
+export const generateQuizQuestions = async (
+  topic: string, 
+  count: number = 5, 
+  difficulty: "easy" | "medium" | "hard" = "medium"
+): Promise<GeminiQuizQuestion[]> => {
+  const difficultyDescription = {
+    easy: "simple questions with straightforward answers, suitable for beginners",
+    medium: "moderately challenging questions that require some knowledge of the subject",
+    hard: "difficult questions that require deep understanding and critical thinking"
+  };
+  
+  const prompt = `Generate ${count} ${difficulty} multiple-choice quiz questions about ${topic}. 
+  The difficulty should be ${difficultyDescription[difficulty]}.
+  
+  Format the response as a valid JSON array with the following structure:
   [
     {
       "question": "Question text here?",

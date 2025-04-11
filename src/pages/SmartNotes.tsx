@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Edit, 
@@ -12,7 +11,8 @@ import {
   Clock, 
   Brain, 
   X, 
-  Upload 
+  Upload,
+  Star
 } from "lucide-react";  // Using File/FileText instead of FilePdf
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageTransition from "@/components/PageTransition";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { generateSummary, generateFlashcards, generateQuizQuestions, GeminiFlashcard } from "@/lib/gemini";
+import { useNavigate } from "react-router-dom";
+import { Slider } from "@/components/ui/slider";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const SmartNotes = () => {
   const [note, setNote] = useState('');
@@ -37,6 +42,11 @@ const SmartNotes = () => {
   const [flashcardFront, setFlashcardFront] = useState(true);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [pdfText, setPdfText] = useState('');
+  const [quizSettingsOpen, setQuizSettingsOpen] = useState(false);
+  const [questionCount, setQuestionCount] = useState(5);
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  
+  const navigate = useNavigate();
 
   // Handle PDF upload
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,18 +54,16 @@ const SmartNotes = () => {
     if (!file) return;
 
     try {
-      // Create a simple text representation for demo
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          // For demonstration, we're just showing that we received the file
           const pdfTextContent = `Text extracted from ${file.name}. In a real implementation, this would contain actual text extracted from the PDF using a proper PDF parser library.`;
           setPdfText(pdfTextContent);
           setNote(note ? `${note}\n\n${pdfTextContent}` : pdfTextContent);
           toast.success('PDF uploaded successfully');
         }
       };
-      reader.readAsText(file); // In reality, you'd use a PDF extraction library here
+      reader.readAsText(file);
     } catch (error) {
       console.error('Error uploading PDF:', error);
       toast.error('Failed to upload PDF');
@@ -65,15 +73,11 @@ const SmartNotes = () => {
   // Recording functionality
   const toggleRecording = () => {
     if (!isRecording) {
-      // Start recording logic
       setIsRecording(true);
       toast.info("Voice recording started");
-      // In a real application, implement the WebSpeech API here
     } else {
-      // Stop recording logic
       setIsRecording(false);
       toast.info("Voice recording stopped");
-      // Process the recording here
     }
   };
 
@@ -96,22 +100,33 @@ const SmartNotes = () => {
     }
   };
 
-  const handleGenerateQuiz = async () => {
+  const handleGenerateQuiz = () => {
     if (!note.trim()) {
       toast.error("Please add some notes first");
       return;
     }
     
+    setQuizSettingsOpen(true);
+  };
+
+  const startQuiz = async () => {
     setGenerating(true);
+    setQuizSettingsOpen(false);
+    
     try {
-      // Use the topic from the title or first line of notes
-      const topic = title !== 'Untitled Note' ? title : note.split('\n')[0];
-      await generateQuizQuestions(topic);
-      toast.success("Quiz questions added to the Quiz section");
+      sessionStorage.setItem('quizContent', note);
+      sessionStorage.setItem('quizTitle', title !== 'Untitled Note' ? title : note.split('\n')[0]);
+      sessionStorage.setItem('quizQuestionCount', questionCount.toString());
+      sessionStorage.setItem('quizDifficulty', difficulty);
+      
+      toast.success("Quiz settings saved! Redirecting to quiz...");
+      
+      setTimeout(() => {
+        navigate('/quiz');
+      }, 1500);
     } catch (error) {
-      console.error("Error generating quiz:", error);
-      toast.error("Failed to generate quiz questions");
-    } finally {
+      console.error("Error preparing quiz:", error);
+      toast.error("Failed to prepare quiz");
       setGenerating(false);
     }
   };
@@ -194,7 +209,6 @@ const SmartNotes = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column - Note taking area */}
           <div className="col-span-1 lg:col-span-2">
             <Card className="p-4">
               <Input
@@ -214,7 +228,6 @@ const SmartNotes = () => {
             </Card>
           </div>
 
-          {/* Right column - AI tools */}
           <div className="col-span-1">
             <Card className="p-4">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
@@ -242,7 +255,6 @@ const SmartNotes = () => {
           </div>
         </div>
 
-        {/* Summary section */}
         {summary && (
           <Collapsible className="mt-6 border rounded-lg p-4">
             <CollapsibleTrigger className="flex items-center justify-between w-full">
@@ -262,7 +274,6 @@ const SmartNotes = () => {
           </Collapsible>
         )}
 
-        {/* Flashcards section */}
         {showFlashcards && flashcards.length > 0 && (
           <div className="mt-6 border rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
@@ -291,6 +302,70 @@ const SmartNotes = () => {
             </div>
           </div>
         )}
+
+        <Dialog open={quizSettingsOpen} onOpenChange={setQuizSettingsOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Bookmark className="mr-2 h-5 w-5" />
+                Quiz Settings
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              <div>
+                <Label className="text-sm font-medium mb-2">Number of Questions: {questionCount}</Label>
+                <Slider
+                  defaultValue={[5]}
+                  value={[questionCount]}
+                  min={1}
+                  max={100}
+                  step={1}
+                  onValueChange={(value) => setQuestionCount(value[0])}
+                  className="py-4"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium mb-2">Difficulty Level:</Label>
+                <RadioGroup 
+                  defaultValue="medium" 
+                  value={difficulty}
+                  onValueChange={(value) => setDifficulty(value as "easy" | "medium" | "hard")}
+                  className="flex space-x-4 justify-between"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="easy" id="quiz-easy" />
+                    <Label htmlFor="quiz-easy" className="flex items-center">
+                      Easy <Star className="h-4 w-4 ml-1 text-green-500 fill-green-500" />
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="medium" id="quiz-medium" />
+                    <Label htmlFor="quiz-medium" className="flex items-center">
+                      Medium <Star className="h-4 w-4 ml-1 text-yellow-500 fill-yellow-500" />
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="hard" id="quiz-hard" />
+                    <Label htmlFor="quiz-hard" className="flex items-center">
+                      Hard <Star className="h-4 w-4 ml-1 text-red-500 fill-red-500" />
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </div>
+            
+            <DialogFooter className="flex justify-between">
+              <Button variant="outline" onClick={() => setQuizSettingsOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={startQuiz} disabled={generating}>
+                {generating ? "Preparing Quiz..." : "Start Quiz"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </PageTransition>
   );
