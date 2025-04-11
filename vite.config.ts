@@ -18,7 +18,11 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      fastRefresh: true,
+      swc: {
+        // SWC-specific configuration can go here if needed
+        // For example: 
+        // jsc: { ... }
+      }
     }),
     mode === 'development' &&
     componentTagger(),
