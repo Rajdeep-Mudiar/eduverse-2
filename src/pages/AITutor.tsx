@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, Brain } from "lucide-react";
 import AIChatMessage from "@/components/AIChatMessage";
+import { generateAIResponse } from "@/lib/gemini";
 
 interface Message {
   content: string;
@@ -12,7 +13,7 @@ interface Message {
 const AITutor = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
-      content: "Hi! I'm your AI learning assistant. How can I help you today with your studies?",
+      content: "Hi! I'm your AI learning assistant powered by Google's Gemini. How can I help you today with your studies?",
       isUser: false,
       timestamp: new Date()
     }
@@ -43,33 +44,27 @@ const AITutor = () => {
     setInputValue("");
     setIsLoading(true);
 
-    // Simulate AI response with different responses based on user input
-    setTimeout(() => {
-      let responseText = "";
-      const lowerCaseInput = inputValue.toLowerCase();
+    // Get AI response using Gemini API
+    try {
+      const response = await generateAIResponse(inputValue);
       
-      if (lowerCaseInput.includes("math") || lowerCaseInput.includes("calculus") || lowerCaseInput.includes("algebra")) {
-        responseText = "I can help with math problems! Would you like to learn about algebra, geometry, calculus, or statistics? I can explain concepts, solve equations, or help with homework.";
-      } else if (lowerCaseInput.includes("science") || lowerCaseInput.includes("physics") || lowerCaseInput.includes("chemistry")) {
-        responseText = "Science is fascinating! I can explain physics concepts, help with chemistry problems, or discuss biology topics. What specific area would you like to explore?";
-      } else if (lowerCaseInput.includes("history") || lowerCaseInput.includes("world war") || lowerCaseInput.includes("revolution")) {
-        responseText = "History is full of important lessons! I can provide information about different historical periods, key events, or influential figures. What time period or event interests you?";
-      } else if (lowerCaseInput.includes("language") || lowerCaseInput.includes("english") || lowerCaseInput.includes("grammar")) {
-        responseText = "I can assist with language learning! Whether it's grammar rules, vocabulary, writing tips, or literature analysis, I'm here to help you improve your language skills.";
-      } else if (lowerCaseInput.includes("recommend") || lowerCaseInput.includes("suggestion") || lowerCaseInput.includes("course")) {
-        responseText = "Based on your interests, I recommend checking out our 'JavaScript for Beginners' course. It's a great starting point for learning programming and has excellent reviews from students.";
-      } else {
-        responseText = "I'm here to help with any subject you're studying! I can explain concepts, help solve problems, recommend courses, or create practice questions. Just let me know what you're working on.";
-      }
-
       const aiMessage: Message = {
-        content: responseText,
+        content: response,
         isUser: false,
         timestamp: new Date()
       };
       setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      const errorMessage: Message = {
+        content: "I'm sorry, I encountered an error processing your request. Please try again later.",
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -83,7 +78,7 @@ const AITutor = () => {
           </div>
           <h1 className="text-2xl font-bold mb-2">AI Learning Assistant</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Your personal AI tutor to help with homework, explain concepts, and improve your learning experience.
+            Your personal AI tutor powered by Google Gemini to help with homework, explain concepts, and improve your learning experience.
           </p>
         </div>
 

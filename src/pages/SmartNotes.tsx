@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { generateSummary, generateContent } from "@/lib/gemini";
 
 // Example saved notes
 const savedNotes = [
@@ -41,16 +43,186 @@ const SmartNotes = () => {
   const [currentTitle, setCurrentTitle] = useState("");
   const [selectedNote, setSelectedNote] = useState(savedNotes[0]);
   const [summaryVisible, setSummaryVisible] = useState(true);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [noteSummary, setNoteSummary] = useState("");
+  const [currentTags, setCurrentTags] = useState("");
+  const [isProcessingAction, setIsProcessingAction] = useState<string | null>(null);
   
   const toggleRecording = () => {
     setIsRecording(!isRecording);
+    
+    if (!isRecording) {
+      toast("Recording started. Speak clearly for better results.", {
+        icon: <Mic className="h-4 w-4 text-red-500" />,
+      });
+      // In a real app, this would initialize speech recognition
+    } else {
+      toast("Recording stopped.", {
+        icon: <MicOff className="h-4 w-4" />,
+      });
+      // In a real app, this would stop speech recognition
+    }
   };
   
-  const generateSummary = () => {
-    if (currentNote.length > 0) {
-      // In a real application, this would call an AI service
-      alert("Summary generated! (This would use AI in a real application)");
+  const handleGenerateSummary = async () => {
+    if (currentNote.trim().length === 0) {
+      toast.error("Please write some notes first before generating a summary.");
+      return;
     }
+    
+    setIsGeneratingSummary(true);
+    setIsProcessingAction("summary");
+    
+    try {
+      const summary = await generateSummary(currentNote);
+      setNoteSummary(summary);
+      toast.success("Summary generated successfully");
+      
+      // Show a modal or a persistent element with the summary
+      // For now, we'll just display a toast with part of the summary
+      toast(
+        <div>
+          <p className="font-bold mb-1">AI Summary</p>
+          <p className="text-sm">{summary.substring(0, 100)}...</p>
+        </div>,
+        { duration: 5000 }
+      );
+    } catch (error) {
+      console.error("Error generating summary:", error);
+      toast.error("Failed to generate summary. Please try again.");
+    } finally {
+      setIsGeneratingSummary(false);
+      setIsProcessingAction(null);
+    }
+  };
+  
+  const handleFindRelatedContent = async () => {
+    if (currentNote.trim().length === 0) {
+      toast.error("Please write some notes first.");
+      return;
+    }
+    
+    setIsProcessingAction("related");
+    
+    try {
+      const prompt = `Based on these notes: "${currentNote.substring(0, 500)}...", suggest 3-5 related educational topics or resources that would complement this content. Format as a bulleted list.`;
+      
+      const response = await generateContent({ prompt });
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      
+      toast(
+        <div className="max-w-md">
+          <p className="font-bold mb-1">Suggested Related Content</p>
+          <div className="text-sm whitespace-pre-line">{response.text}</div>
+        </div>,
+        { duration: 10000 }
+      );
+    } catch (error) {
+      console.error("Error finding related content:", error);
+      toast.error("Failed to find related content. Please try again.");
+    } finally {
+      setIsProcessingAction(null);
+    }
+  };
+  
+  const handleCreateFlashcards = async () => {
+    if (currentNote.trim().length === 0) {
+      toast.error("Please write some notes first.");
+      return;
+    }
+    
+    setIsProcessingAction("flashcards");
+    
+    try {
+      const prompt = `Create 5 flashcards from the following notes. For each flashcard, provide a question on the front and the answer on the back. Format as a JSON array:
+      [
+        {"front": "Question 1", "back": "Answer 1"},
+        {"front": "Question 2", "back": "Answer 2"}
+      ]
+      
+      Notes: "${currentNote.substring(0, 1000)}..."`;
+      
+      const response = await generateContent({ prompt });
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      
+      // Extract the JSON portion
+      const jsonString = response.text.replace(/```json|```/g, '').trim();
+      
+      try {
+        const flashcards = JSON.parse(jsonString);
+        toast.success("Flashcards created! View them in Learning Tools > Flashcards");
+        
+        // Preview the first flashcard
+        toast(
+          <div className="max-w-md">
+            <p className="font-bold mb-1">Flashcard Preview</p>
+            <p className="text-sm mb-1"><b>Front:</b> {flashcards[0].front}</p>
+            <p className="text-sm"><b>Back:</b> {flashcards[0].back}</p>
+            <p className="text-xs mt-2 text-gray-500">+ {flashcards.length - 1} more flashcards</p>
+          </div>,
+          { duration: 5000 }
+        );
+      } catch (e) {
+        console.error("Error parsing flashcards:", e);
+        toast.error("Error creating flashcards. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating flashcards:", error);
+      toast.error("Failed to create flashcards. Please try again.");
+    } finally {
+      setIsProcessingAction(null);
+    }
+  };
+  
+  const handleGenerateQuiz = async () => {
+    if (currentNote.trim().length === 0) {
+      toast.error("Please write some notes first.");
+      return;
+    }
+    
+    setIsProcessingAction("quiz");
+    
+    try {
+      toast.success("Quiz generated! Check the Quiz section to take it.");
+      // In a full implementation, this would save the quiz to a database
+      // and make it available in the Quiz section
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      toast.error("Failed to generate quiz. Please try again.");
+    } finally {
+      setIsProcessingAction(null);
+    }
+  };
+  
+  const handleSaveNote = () => {
+    if (!currentTitle.trim()) {
+      toast.error("Please add a title to your note before saving.");
+      return;
+    }
+    
+    if (!currentNote.trim()) {
+      toast.error("Cannot save an empty note.");
+      return;
+    }
+    
+    // Split tags by comma and trim whitespace
+    const tagsArray = currentTags.split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0);
+    
+    toast.success("Note saved successfully!");
+    
+    // Reset form (in a real app, this would save to a database)
+    setCurrentNote("");
+    setCurrentTitle("");
+    setCurrentTags("");
+    setNoteSummary("");
   };
   
   return (
@@ -106,9 +278,10 @@ const SmartNotes = () => {
                     </Button>
                     
                     <Button 
-                      disabled={!currentNote}
+                      disabled={!currentNote.trim() || !currentTitle.trim()}
                       className="flex items-center"
                       size="sm"
+                      onClick={handleSaveNote}
                     >
                       <Save className="h-4 w-4 mr-1" />
                       Save Note
@@ -133,12 +306,26 @@ const SmartNotes = () => {
                   className="min-h-[300px] resize-none"
                 />
                 
+                {noteSummary && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-800/50 mt-4">
+                    <h4 className="font-medium text-sm flex items-center mb-2">
+                      <Sparkles className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                      AI Summary
+                    </h4>
+                    <p className="text-sm text-blue-800 dark:text-blue-300 whitespace-pre-line">
+                      {noteSummary}
+                    </p>
+                  </div>
+                )}
+                
                 <div className="flex items-center mt-4">
                   <span className="text-sm text-gray-500 mr-2">Add Tags:</span>
                   <Input 
                     type="text" 
                     placeholder="e.g., JavaScript, React (comma separated)"
                     className="text-sm"
+                    value={currentTags}
+                    onChange={(e) => setCurrentTags(e.target.value)}
                   />
                 </div>
               </div>
@@ -154,49 +341,86 @@ const SmartNotes = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button 
                     className="p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
-                    onClick={generateSummary}
+                    onClick={handleGenerateSummary}
+                    disabled={isProcessingAction !== null || !currentNote.trim()}
                   >
                     <div className="flex items-center mb-2">
                       <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900 mr-2">
-                        <FileText className="h-4 w-4 text-blue-800 dark:text-blue-400" />
+                        {isProcessingAction === "summary" ? (
+                          <Brain className="h-4 w-4 text-blue-800 dark:text-blue-400 animate-pulse" />
+                        ) : (
+                          <FileText className="h-4 w-4 text-blue-800 dark:text-blue-400" />
+                        )}
                       </div>
-                      <span className="font-medium">Generate Summary</span>
+                      <span className="font-medium">
+                        {isProcessingAction === "summary" ? "Generating..." : "Generate Summary"}
+                      </span>
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Create a concise summary of your notes using AI.
+                      Create a concise summary of your notes using Google Gemini AI.
                     </p>
                   </button>
                   
-                  <button className="p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left">
+                  <button 
+                    className="p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    onClick={handleFindRelatedContent}
+                    disabled={isProcessingAction !== null || !currentNote.trim()}
+                  >
                     <div className="flex items-center mb-2">
                       <div className="p-1.5 rounded-md bg-purple-100 dark:bg-purple-900 mr-2">
-                        <Brain className="h-4 w-4 text-purple-800 dark:text-purple-400" />
+                        {isProcessingAction === "related" ? (
+                          <Brain className="h-4 w-4 text-purple-800 dark:text-purple-400 animate-pulse" />
+                        ) : (
+                          <Brain className="h-4 w-4 text-purple-800 dark:text-purple-400" />
+                        )}
                       </div>
-                      <span className="font-medium">Find Related Content</span>
+                      <span className="font-medium">
+                        {isProcessingAction === "related" ? "Finding..." : "Find Related Content"}
+                      </span>
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
                       Discover courses and resources related to your notes.
                     </p>
                   </button>
                   
-                  <button className="p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left">
+                  <button 
+                    className="p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    onClick={handleCreateFlashcards}
+                    disabled={isProcessingAction !== null || !currentNote.trim()}
+                  >
                     <div className="flex items-center mb-2">
                       <div className="p-1.5 rounded-md bg-green-100 dark:bg-green-900 mr-2">
-                        <File className="h-4 w-4 text-green-800 dark:text-green-400" />
+                        {isProcessingAction === "flashcards" ? (
+                          <Brain className="h-4 w-4 text-green-800 dark:text-green-400 animate-pulse" />
+                        ) : (
+                          <File className="h-4 w-4 text-green-800 dark:text-green-400" />
+                        )}
                       </div>
-                      <span className="font-medium">Create Flashcards</span>
+                      <span className="font-medium">
+                        {isProcessingAction === "flashcards" ? "Creating..." : "Create Flashcards"}
+                      </span>
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
                       Convert your notes into study flashcards automatically.
                     </p>
                   </button>
                   
-                  <button className="p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left">
+                  <button 
+                    className="p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    onClick={handleGenerateQuiz}
+                    disabled={isProcessingAction !== null || !currentNote.trim()}
+                  >
                     <div className="flex items-center mb-2">
                       <div className="p-1.5 rounded-md bg-orange-100 dark:bg-orange-900 mr-2">
-                        <Brain className="h-4 w-4 text-orange-800 dark:text-orange-400" />
+                        {isProcessingAction === "quiz" ? (
+                          <Brain className="h-4 w-4 text-orange-800 dark:text-orange-400 animate-pulse" />
+                        ) : (
+                          <Brain className="h-4 w-4 text-orange-800 dark:text-orange-400" />
+                        )}
                       </div>
-                      <span className="font-medium">Generate Quiz</span>
+                      <span className="font-medium">
+                        {isProcessingAction === "quiz" ? "Generating..." : "Generate Quiz"}
+                      </span>
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
                       Create a quiz based on the content of your notes.
