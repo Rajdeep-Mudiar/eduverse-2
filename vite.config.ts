@@ -17,13 +17,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   plugins: [
-    react({
-      swc: {
-        // SWC-specific configuration can go here if needed
-        // For example: 
-        // jsc: { ... }
-      }
-    }),
+    react(),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
