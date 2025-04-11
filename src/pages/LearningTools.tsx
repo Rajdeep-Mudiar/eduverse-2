@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MousePointer, Plus, RotateCcw, Brain, X, Save, Lightbulb, PenTool, Edit } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // Example flashcards
-const flashcardSets = [
+const defaultFlashcardSets = [
   {
     id: 1,
     title: "JavaScript Fundamentals",
@@ -73,8 +73,37 @@ const mindMaps = [
 
 const LearningTools = () => {
   const [flippedCard, setFlippedCard] = useState<number | null>(null);
-  const [currentFlashcardSet, setCurrentFlashcardSet] = useState(flashcardSets[0]);
+  const [flashcardSets, setFlashcardSets] = useState(defaultFlashcardSets);
+  const [currentFlashcardSet, setCurrentFlashcardSet] = useState(defaultFlashcardSets[0]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [newSetTitle, setNewSetTitle] = useState("");
+  const [newSetDescription, setNewSetDescription] = useState("");
+  
+  // Load flashcards from localStorage on component mount
+  useEffect(() => {
+    const savedFlashcardSets = localStorage.getItem('flashcardSets');
+    if (savedFlashcardSets) {
+      try {
+        const parsedSets = JSON.parse(savedFlashcardSets);
+        const allSets = [...defaultFlashcardSets, ...parsedSets];
+        
+        // Remove duplicates based on id
+        const uniqueSets = allSets.filter((set, index, self) => 
+          index === self.findIndex((s) => s.id === set.id)
+        );
+        
+        setFlashcardSets(uniqueSets);
+        
+        // If there are saved sets, set the first one as current
+        if (parsedSets.length > 0) {
+          setCurrentFlashcardSet(parsedSets[0]);
+          setCurrentCardIndex(0);
+        }
+      } catch (error) {
+        console.error("Error loading flashcard sets:", error);
+      }
+    }
+  }, []);
   
   const flipCard = (cardId: number) => {
     if (flippedCard === cardId) {
@@ -100,6 +129,28 @@ const LearningTools = () => {
     } else {
       setCurrentCardIndex(currentFlashcardSet.cards.length - 1);
     }
+  };
+  
+  const handleCreateSet = () => {
+    if (!newSetTitle.trim()) return;
+    
+    const newSet = {
+      id: Date.now(),
+      title: newSetTitle,
+      cards: [],
+      color: "bg-blue-100 dark:bg-blue-900",
+      textColor: "text-blue-800 dark:text-blue-400",
+      createdAt: "Just now"
+    };
+    
+    const updatedSets = [...flashcardSets, newSet];
+    setFlashcardSets(updatedSets);
+    setNewSetTitle("");
+    setNewSetDescription("");
+    
+    // Also update localStorage
+    const existingSets = JSON.parse(localStorage.getItem('flashcardSets') || '[]');
+    localStorage.setItem('flashcardSets', JSON.stringify([...existingSets, newSet]));
   };
   
   return (
@@ -140,15 +191,23 @@ const LearningTools = () => {
                     <div className="space-y-4 py-4">
                       <div>
                         <label className="text-sm font-medium mb-1 block">Set Title</label>
-                        <Input placeholder="e.g., Biology Terms" />
+                        <Input 
+                          placeholder="e.g., Biology Terms" 
+                          value={newSetTitle}
+                          onChange={(e) => setNewSetTitle(e.target.value)}
+                        />
                       </div>
                       <div>
                         <label className="text-sm font-medium mb-1 block">Description (Optional)</label>
-                        <Textarea placeholder="Brief description of this flashcard set" />
+                        <Textarea 
+                          placeholder="Brief description of this flashcard set" 
+                          value={newSetDescription}
+                          onChange={(e) => setNewSetDescription(e.target.value)}
+                        />
                       </div>
                       <div className="flex justify-between">
                         <Button variant="outline">Cancel</Button>
-                        <Button>Create Set</Button>
+                        <Button onClick={handleCreateSet}>Create Set</Button>
                       </div>
                     </div>
                   </DialogContent>
@@ -216,37 +275,48 @@ const LearningTools = () => {
                 </div>
                 
                 {/* Flashcard display */}
-                <div 
-                  className="relative h-64 w-full cursor-pointer perspective-1000 mb-4"
-                  onClick={() => flipCard(currentFlashcardSet.cards[currentCardIndex].id)}
-                >
-                  <div className={`absolute inset-0 transition-all duration-500 transform-style-3d ${
-                    flippedCard === currentFlashcardSet.cards[currentCardIndex].id ? 'rotate-y-180' : ''
-                  }`}>
-                    <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-center backface-hidden shadow-md">
-                      <h3 className="text-xl font-medium text-center">
-                        {currentFlashcardSet.cards[currentCardIndex].front}
-                      </h3>
-                    </div>
-                    <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-center backface-hidden rotate-y-180 shadow-md">
-                      <p className="text-center">
-                        {currentFlashcardSet.cards[currentCardIndex].back}
-                      </p>
+                {currentFlashcardSet.cards.length > 0 ? (
+                  <div 
+                    className="relative h-64 w-full cursor-pointer perspective-1000 mb-4"
+                    onClick={() => flipCard(currentFlashcardSet.cards[currentCardIndex].id)}
+                  >
+                    <div className={`absolute inset-0 transition-all duration-500 transform-style-3d ${
+                      flippedCard === currentFlashcardSet.cards[currentCardIndex].id ? 'rotate-y-180' : ''
+                    }`}>
+                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-center backface-hidden shadow-md">
+                        <h3 className="text-xl font-medium text-center">
+                          {currentFlashcardSet.cards[currentCardIndex].front}
+                        </h3>
+                      </div>
+                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-center backface-hidden rotate-y-180 shadow-md">
+                        <p className="text-center">
+                          {currentFlashcardSet.cards[currentCardIndex].back}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="text-center">
+                      <p className="text-gray-500">No cards in this set yet</p>
+                      <Button size="sm" className="mt-4">Add Cards</Button>
+                    </div>
+                  </div>
+                )}
                 
-                <div className="flex justify-between items-center">
-                  <Button variant="outline" onClick={prevCard}>
-                    Previous
-                  </Button>
-                  <span className="text-sm text-gray-500">
-                    Click card to flip
-                  </span>
-                  <Button onClick={nextCard}>
-                    Next
-                  </Button>
-                </div>
+                {currentFlashcardSet.cards.length > 0 && (
+                  <div className="flex justify-between items-center">
+                    <Button variant="outline" onClick={prevCard}>
+                      Previous
+                    </Button>
+                    <span className="text-sm text-gray-500">
+                      Click card to flip
+                    </span>
+                    <Button onClick={nextCard}>
+                      Next
+                    </Button>
+                  </div>
+                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

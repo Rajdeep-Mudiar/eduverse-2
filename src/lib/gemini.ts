@@ -24,6 +24,11 @@ export interface GeminiParams {
   topP?: number;
 }
 
+export interface GeminiFlashcard {
+  front: string;
+  back: string;
+}
+
 export const generateContent = async (params: GeminiParams): Promise<GeminiResponse> => {
   try {
     const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
@@ -104,9 +109,43 @@ export const generateQuizQuestions = async (topic: string, count: number = 5): P
   }
 };
 
+export const generateFlashcards = async (content: string, count: number = 5): Promise<GeminiFlashcard[]> => {
+  const prompt = `Create ${count} flashcards from the following content. For each flashcard, provide a question on the front and the answer on the back. Format as a JSON array:
+  [
+    {"front": "Question 1", "back": "Answer 1"},
+    {"front": "Question 2", "back": "Answer 2"}
+  ]
+  
+  Content: "${content.substring(0, 2000)}..."
+  
+  Make sure the JSON is valid and correctly formatted. Do not include any additional text outside the JSON array.`;
+
+  try {
+    const response = await generateContent({
+      prompt,
+      temperature: 0.4, // Lower temperature for more factual flashcards
+      maxOutputTokens: 2048
+    });
+
+    if (response.error) {
+      throw new Error(response.error);
+    }
+
+    // Extract the JSON portion from the text
+    const jsonString = response.text.trim().replace(/```json|```/g, '');
+    const flashcards = JSON.parse(jsonString) as GeminiFlashcard[];
+    
+    return flashcards;
+  } catch (error) {
+    console.error("Error generating flashcards:", error);
+    toast.error("Failed to generate flashcards");
+    return [];
+  }
+};
+
 export const generateSummary = async (text: string): Promise<string> => {
   const prompt = `Summarize the following text in a concise and informative manner:
-  "${text}"
+  "${text.substring(0, 3000)}..."
   
   Provide a clear and structured summary that captures the key points.`;
 
@@ -125,6 +164,23 @@ export const generateSummary = async (text: string): Promise<string> => {
     console.error("Error generating summary:", error);
     toast.error("Failed to generate summary");
     return "";
+  }
+};
+
+export const extractTextFromPDF = async (pdfArrayBuffer: ArrayBuffer): Promise<string> => {
+  // In a real implementation, you'd use a PDF parsing library
+  // This is a placeholder for the PDF extraction logic
+  
+  // For demonstration purposes, we'll use a mock implementation
+  // In production, consider using libraries like pdf.js or pdfjs-dist
+  
+  try {
+    // This would be where the actual PDF parsing would happen
+    // For now, we'll return a placeholder message
+    return "This is extracted text from the PDF file. In a real implementation, this would contain the actual text content from the PDF document.";
+  } catch (error) {
+    console.error("Error extracting text from PDF:", error);
+    throw new Error("Failed to extract text from PDF");
   }
 };
 

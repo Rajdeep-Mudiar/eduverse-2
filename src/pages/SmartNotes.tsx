@@ -1,15 +1,14 @@
-
-import { useState } from 'react';
-import { Edit, Save, Mic, MicOff, Bookmark, File, Sparkles, FileText, Clock, Brain, X } from "lucide-react";
+import { useState, useRef } from 'react';
+import { Edit, Save, Mic, MicOff, Bookmark, File, Sparkles, FileText, Clock, Brain, X, Upload, FilePdf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { generateSummary, generateContent } from "@/lib/gemini";
+import { generateSummary, generateContent, generateQuizQuestions, GeminiQuizQuestion } from "@/lib/gemini";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-// Example saved notes
 const savedNotes = [
   {
     id: 1,
@@ -37,6 +36,21 @@ const savedNotes = [
   }
 ];
 
+interface Flashcard {
+  id: number;
+  front: string;
+  back: string;
+}
+
+interface FlashcardSet {
+  id: number;
+  title: string;
+  cards: Flashcard[];
+  color: string;
+  textColor: string;
+  createdAt: string;
+}
+
 const SmartNotes = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [currentNote, setCurrentNote] = useState("");
@@ -47,6 +61,12 @@ const SmartNotes = () => {
   const [noteSummary, setNoteSummary] = useState("");
   const [currentTags, setCurrentTags] = useState("");
   const [isProcessingAction, setIsProcessingAction] = useState<string | null>(null);
+  const [pdfContent, setPdfContent] = useState<string | null>(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [createdFlashcards, setCreatedFlashcards] = useState<Flashcard[]>([]);
+  const [showFlashcards, setShowFlashcards] = useState(false);
+  const [createdQuizQuestions, setCreatedQuizQuestions] = useState<GeminiQuizQuestion[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const toggleRecording = () => {
     setIsRecording(!isRecording);
@@ -55,12 +75,10 @@ const SmartNotes = () => {
       toast("Recording started. Speak clearly for better results.", {
         icon: <Mic className="h-4 w-4 text-red-500" />,
       });
-      // In a real app, this would initialize speech recognition
     } else {
       toast("Recording stopped.", {
         icon: <MicOff className="h-4 w-4" />,
       });
-      // In a real app, this would stop speech recognition
     }
   };
   
@@ -78,8 +96,6 @@ const SmartNotes = () => {
       setNoteSummary(summary);
       toast.success("Summary generated successfully");
       
-      // Show a modal or a persistent element with the summary
-      // For now, we'll just display a toast with part of the summary
       toast(
         <div>
           <p className="font-bold mb-1">AI Summary</p>
@@ -128,6 +144,51 @@ const SmartNotes = () => {
     }
   };
   
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.type !== 'application/pdf') {
+      toast.error("Please upload a PDF file");
+      return;
+    }
+    
+    setIsPdfLoading(true);
+    
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const blob = new Blob([arrayBuffer]);
+      
+      const reader = new FileReader();
+      
+      reader.onload = async (event) => {
+        const result = event.target?.result as string;
+        const extractedText = result;
+        
+        setCurrentNote(extractedText);
+        setCurrentTitle(file.name.replace('.pdf', ''));
+        setPdfContent(extractedText);
+        toast.success("PDF uploaded and text extracted successfully");
+        setIsPdfLoading(false);
+      };
+      
+      reader.onerror = () => {
+        toast.error("Failed to read the PDF file");
+        setIsPdfLoading(false);
+      };
+      
+      reader.readAsText(blob);
+    } catch (error) {
+      console.error("Error processing PDF:", error);
+      toast.error("Failed to process the PDF file");
+      setIsPdfLoading(false);
+    }
+  };
+  
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+  
   const handleCreateFlashcards = async () => {
     if (currentNote.trim().length === 0) {
       toast.error("Please write some notes first.");
@@ -151,14 +212,33 @@ const SmartNotes = () => {
         throw new Error(response.error);
       }
       
-      // Extract the JSON portion
       const jsonString = response.text.replace(/```json|```/g, '').trim();
       
       try {
         const flashcards = JSON.parse(jsonString);
+        
+        const flashcardsWithIds = flashcards.map((card: any, index: number) => ({
+          ...card,
+          id: Date.now() + index
+        }));
+        
+        const newFlashcardSet: FlashcardSet = {
+          id: Date.now(),
+          title: currentTitle || "Notes Flashcards",
+          cards: flashcardsWithIds,
+          color: "bg-blue-100 dark:bg-blue-900",
+          textColor: "text-blue-800 dark:text-blue-400",
+          createdAt: "Just now"
+        };
+        
+        setCreatedFlashcards(flashcardsWithIds);
+        setShowFlashcards(true);
+        
+        const existingFlashcardSets = JSON.parse(localStorage.getItem('flashcardSets') || '[]');
+        localStorage.setItem('flashcardSets', JSON.stringify([...existingFlashcardSets, newFlashcardSet]));
+        
         toast.success("Flashcards created! View them in Learning Tools > Flashcards");
         
-        // Preview the first flashcard
         toast(
           <div className="max-w-md">
             <p className="font-bold mb-1">Flashcard Preview</p>
@@ -189,9 +269,19 @@ const SmartNotes = () => {
     setIsProcessingAction("quiz");
     
     try {
+      const topic = currentTitle || "General Knowledge";
+      const questions = await generateQuizQuestions(topic, 5);
+      
+      if (questions.length === 0) {
+        throw new Error("Failed to generate quiz questions");
+      }
+      
+      setCreatedQuizQuestions(questions);
+      
+      localStorage.setItem('quizQuestions', JSON.stringify(questions));
+      localStorage.setItem('quizTopic', topic);
+      
       toast.success("Quiz generated! Check the Quiz section to take it.");
-      // In a full implementation, this would save the quiz to a database
-      // and make it available in the Quiz section
     } catch (error) {
       console.error("Error generating quiz:", error);
       toast.error("Failed to generate quiz. Please try again.");
@@ -211,14 +301,12 @@ const SmartNotes = () => {
       return;
     }
     
-    // Split tags by comma and trim whitespace
     const tagsArray = currentTags.split(',')
       .map(tag => tag.trim())
       .filter(tag => tag.length > 0);
     
     toast.success("Note saved successfully!");
     
-    // Reset form (in a real app, this would save to a database)
     setCurrentNote("");
     setCurrentTitle("");
     setCurrentTags("");
@@ -243,7 +331,6 @@ const SmartNotes = () => {
         
         <TabsContent value="create">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Note editor */}
             <div className="lg:col-span-2">
               <div className="edu-card p-4 mb-6">
                 <div className="flex justify-between items-center mb-4">
@@ -258,6 +345,33 @@ const SmartNotes = () => {
                   </div>
                   
                   <div className="flex items-center space-x-2">
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileUpload} 
+                      className="hidden" 
+                      accept=".pdf"
+                    />
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={triggerFileUpload}
+                      className="flex items-center"
+                      disabled={isPdfLoading}
+                    >
+                      {isPdfLoading ? (
+                        <>
+                          <span className="animate-spin mr-1">⌛</span> Loading
+                        </>
+                      ) : (
+                        <>
+                          <FilePdf className="h-4 w-4 mr-1" />
+                          Upload PDF
+                        </>
+                      )}
+                    </Button>
+                    
                     <Button 
                       variant={isRecording ? "destructive" : "outline"} 
                       size="sm"
@@ -296,6 +410,23 @@ const SmartNotes = () => {
                       <span className="text-sm font-medium text-red-800 dark:text-red-400">Recording audio...</span>
                     </div>
                     <span className="text-sm text-red-700 dark:text-red-300">00:12</span>
+                  </div>
+                )}
+                
+                {pdfContent && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50 rounded-md mb-4 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FilePdf className="h-4 w-4 text-amber-600 mr-2" />
+                      <span className="text-sm font-medium text-amber-800 dark:text-amber-400">PDF content loaded</span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setPdfContent(null)}
+                      className="text-amber-600 hover:text-amber-800 h-6 w-6 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
                 
@@ -430,7 +561,6 @@ const SmartNotes = () => {
               </div>
             </div>
             
-            {/* Right sidebar */}
             <div className="space-y-6">
               <div className="edu-card p-4">
                 <h3 className="font-bold mb-4 flex items-center">
@@ -480,7 +610,6 @@ const SmartNotes = () => {
         
         <TabsContent value="saved">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Notes list */}
             <div className="edu-card p-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold">All Notes</h3>
@@ -516,7 +645,6 @@ const SmartNotes = () => {
               </div>
             </div>
             
-            {/* Note viewer */}
             <div className="lg:col-span-2">
               <div className="edu-card p-4">
                 <div className="flex justify-between items-center mb-4">
@@ -570,6 +698,32 @@ const SmartNotes = () => {
           </div>
         </TabsContent>
       </Tabs>
+      
+      <Dialog open={showFlashcards} onOpenChange={setShowFlashcards}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Generated Flashcards</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto">
+            {createdFlashcards.map((card) => (
+              <div key={card.id} className="mb-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 font-medium">
+                  {card.front}
+                </div>
+                <div className="p-4 bg-white dark:bg-gray-800">
+                  {card.back}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between items-center mt-4">
+            <span className="text-sm text-gray-500">
+              These flashcards have been saved to Learning Tools
+            </span>
+            <Button onClick={() => setShowFlashcards(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
