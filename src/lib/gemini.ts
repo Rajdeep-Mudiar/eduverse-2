@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 // Gemini API key
 const GEMINI_API_KEY = "AIzaSyBQw_aZH8STLIWryaFgWJoBycfRTGwATiM";
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+const API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent";
 
 export interface GeminiResponse {
   text: string;
