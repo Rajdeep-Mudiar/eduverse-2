@@ -1,8 +1,7 @@
 import { toast } from "sonner";
-import { API_KEYS } from "@/config/api-keys";
 
-// Use the API key from our config file
-const GEMINI_API_KEY = API_KEYS.GEMINI_API_KEY;
+// Gemini API key
+const GEMINI_API_KEY = "AIzaSyBQw_aZH8STLIWryaFgWJoBycfRTGwATiM";
 const API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent";
 
 export interface GeminiResponse {
