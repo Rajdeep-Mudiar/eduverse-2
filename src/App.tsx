@@ -24,7 +24,6 @@ import LearningTools from "./pages/LearningTools";
 import SmartNotes from "./pages/SmartNotes";
 import CareerDevelopment from "./pages/CareerDevelopment";
 import CodingLabs from "./pages/CodingLabs";
-import YouTubeLearning from "./pages/YouTubeLearning"; // Import the new page
 
 const queryClient = new QueryClient();
 
@@ -49,7 +48,6 @@ const AnimatedRoutes = () => {
         <Route path="/smart-notes" element={<SmartNotes />} />
         <Route path="/career-development" element={<CareerDevelopment />} />
         <Route path="/coding-labs" element={<CodingLabs />} />
-        <Route path="/youtube-learning" element={<YouTubeLearning />} /> {/* Add the new route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Edit, 
@@ -6,7 +5,7 @@ import {
   Mic, 
   MicOff, 
   Bookmark, 
-  File as FileIcon, 
+  File, 
   Sparkles, 
   FileText, 
   Clock, 
@@ -14,7 +13,7 @@ import {
   X, 
   Upload,
   Star
-} from "lucide-react";
+} from "lucide-react";  // Using File/FileText instead of FilePdf
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,13 +24,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageTransition from "@/components/PageTransition";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { generateSummary, generateFlashcards, generateQuizQuestions, GeminiFlashcard } from "@/lib/gemini";
-import { generateOpenAIResponse } from "@/lib/openai";
 import { useNavigate } from "react-router-dom";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { transcribeAudio } from "@/lib/assemblyai";
 
 const SmartNotes = () => {
   const [note, setNote] = useState('');
@@ -48,13 +45,10 @@ const SmartNotes = () => {
   const [quizSettingsOpen, setQuizSettingsOpen] = useState(false);
   const [questionCount, setQuestionCount] = useState(5);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
-  const [useOpenAI, setUseOpenAI] = useState(false);
-  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
-  const [audioRecording, setAudioRecording] = useState<MediaRecorder | null>(null);
-  const [recordingChunks, setRecordingChunks] = useState<BlobPart[]>([]);
   
   const navigate = useNavigate();
 
+  // Handle PDF upload
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -76,50 +70,12 @@ const SmartNotes = () => {
     }
   };
 
-  const toggleRecording = async () => {
+  // Recording functionality
+  const toggleRecording = () => {
     if (!isRecording) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        const chunks: BlobPart[] = [];
-        
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            chunks.push(e.data);
-          }
-        };
-        
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-          setRecordedBlob(audioBlob);
-          
-          // Fix: Creating File object correctly
-          const audioFile = new File([audioBlob], "recording.webm", { type: 'audio/webm' });
-          
-          toast.loading("Transcribing audio...");
-          try {
-            const transcription = await transcribeAudio(audioFile);
-            setNote(note => note ? `${note}\n\n${transcription}` : transcription);
-            toast.success("Audio transcribed and added to notes");
-          } catch (error) {
-            toast.error("Failed to transcribe audio");
-            console.error(error);
-          }
-        };
-        
-        mediaRecorder.start();
-        setAudioRecording(mediaRecorder);
-        setRecordingChunks(chunks);
-        setIsRecording(true);
-        toast.info("Voice recording started");
-      } catch (error) {
-        console.error("Error accessing microphone:", error);
-        toast.error("Could not access microphone");
-      }
+      setIsRecording(true);
+      toast.info("Voice recording started");
     } else {
-      if (audioRecording) {
-        audioRecording.stop();
-      }
       setIsRecording(false);
       toast.info("Voice recording stopped");
     }
@@ -133,13 +89,7 @@ const SmartNotes = () => {
     
     setGenerating(true);
     try {
-      let result;
-      if (useOpenAI) {
-        const response = await generateOpenAIResponse(`Please summarize the following text concisely and informatively:\n\n${note}`);
-        result = response.text;
-      } else {
-        result = await generateSummary(note);
-      }
+      const result = await generateSummary(note);
       setSummary(result);
       toast.success("Summary generated");
     } catch (error) {
@@ -279,23 +229,13 @@ const SmartNotes = () => {
           </div>
 
           <div className="col-span-1">
-            <Card className="p-4 mb-6">
+            <Card className="p-4">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <Brain className="mr-2 h-5 w-5" />
                 AI Tools
               </h2>
               
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Use OpenAI (Better Quality)</span>
-                  <input
-                    type="checkbox"
-                    checked={useOpenAI}
-                    onChange={(e) => setUseOpenAI(e.target.checked)}
-                    className="ml-2"
-                  />
-                </div>
-                
                 <Button onClick={handleGenerateSummary} className="w-full justify-start" disabled={generating}>
                   <Sparkles className="mr-2 h-4 w-4" />
                   Generate Summary
