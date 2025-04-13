@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Edit, 
@@ -5,7 +6,7 @@ import {
   Mic, 
   MicOff, 
   Bookmark, 
-  File, 
+  File as FileIcon, 
   Sparkles, 
   FileText, 
   Clock, 
@@ -92,11 +93,12 @@ const SmartNotes = () => {
           const audioBlob = new Blob(chunks, { type: 'audio/webm' });
           setRecordedBlob(audioBlob);
           
-          const file = new File([audioBlob], "recording.webm", { type: 'audio/webm' });
+          // Fix: Creating File object correctly
+          const audioFile = new File([audioBlob], "recording.webm", { type: 'audio/webm' });
           
           toast.loading("Transcribing audio...");
           try {
-            const transcription = await transcribeAudio(file);
+            const transcription = await transcribeAudio(audioFile);
             setNote(note => note ? `${note}\n\n${transcription}` : transcription);
             toast.success("Audio transcribed and added to notes");
           } catch (error) {
