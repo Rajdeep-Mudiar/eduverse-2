@@ -25,6 +25,7 @@ import SmartNotes from "./pages/SmartNotes";
 import CareerDevelopment from "./pages/CareerDevelopment";
 import CodingLabs from "./pages/CodingLabs";
 import YouTubeLearning from "./pages/YouTubeLearning";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const AnimatedRoutes = () => {
         <Route path="/career-development" element={<CareerDevelopment />} />
         <Route path="/coding-labs" element={<CodingLabs />} />
         <Route path="/youtube-learning" element={<YouTubeLearning />} />
+        <Route path="/pricing" element={<Pricing />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

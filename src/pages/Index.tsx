@@ -1,7 +1,7 @@
 
 import HeroSection from "@/components/HeroSection";
 import { CardFeature } from "@/components/ui/card-feature";
-import { BarChart3, BookOpen, Gamepad2, Video, Rocket } from "lucide-react";
+import { BarChart3, BookOpen, Gamepad2, Video, Rocket, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageTransition from "@/components/PageTransition";
 import { MotionContainer, MotionChild } from "@/components/MotionWrapper";
@@ -49,7 +49,7 @@ const Index = () => {
           </MotionChild>
         </MotionContainer>
 
-        <MotionContainer className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <MotionContainer className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <MotionChild>
             <CardFeature
               icon={Rocket}
@@ -85,6 +85,25 @@ const Index = () => {
                     Chess
                   </button>
                 </div>
+              }
+            />
+          </MotionChild>
+        </MotionContainer>
+
+        <MotionContainer className="mb-8">
+          <MotionChild>
+            <CardFeature
+              icon={CreditCard}
+              title="Upgrade Your Learning Experience"
+              description="Explore our subscription plans and get access to premium features."
+              to="/pricing"
+              action={
+                <Link 
+                  to="/pricing" 
+                  className="text-sm font-medium bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-4 rounded-md inline-flex items-center hover:opacity-90 transition-opacity"
+                >
+                  View Pricing Plans
+                </Link>
               }
             />
           </MotionChild>

@@ -17,7 +17,8 @@ import {
   FileText,
   Briefcase,
   Code,
-  Youtube
+  Youtube,
+  CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme';
@@ -65,6 +66,7 @@ const Sidebar = () => {
     { icon: Rocket, label: "AI-Powered Quiz", path: "/quiz" },
     { icon: Music, label: "Audio Learning", path: "/audio" },
     { icon: Bot, label: "AI Tutor", path: "/ai-tutor" },
+    { icon: CreditCard, label: "Pricing", path: "/pricing" },
   ];
 
   return (
