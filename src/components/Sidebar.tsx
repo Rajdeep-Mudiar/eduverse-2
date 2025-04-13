@@ -16,7 +16,8 @@ import {
   Brain, 
   FileText,
   Briefcase,
-  Code
+  Code,
+  Youtube
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme';
@@ -54,6 +55,7 @@ const Sidebar = () => {
     { icon: BookOpen, label: "Courses", path: "/courses" },
     { icon: Gamepad2, label: "Games", path: "/games" },
     { icon: Video, label: "Live Webinars", path: "/webinars" },
+    { icon: Youtube, label: "YouTube Learning", path: "/youtube-learning" },
     { icon: Trophy, label: "Leaderboard", path: "/leaderboard" },
     { icon: MessageCircle, label: "Community", path: "/community" },
     { icon: Brain, label: "Learning Tools", path: "/learning-tools" },

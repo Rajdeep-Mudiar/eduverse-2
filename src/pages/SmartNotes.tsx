@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Edit, 
   Save, 
@@ -12,8 +13,10 @@ import {
   Brain, 
   X, 
   Upload,
-  Star
-} from "lucide-react";  // Using File/FileText instead of FilePdf
+  Star,
+  Volume2,
+  VolumeX
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +32,8 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { textToSpeech, playAudio } from "@/lib/elevenlabs";
+import { startRealTimeTranscription } from "@/lib/assemblyai";
 
 const SmartNotes = () => {
   const [note, setNote] = useState('');
@@ -45,8 +50,23 @@ const SmartNotes = () => {
   const [quizSettingsOpen, setQuizSettingsOpen] = useState(false);
   const [questionCount, setQuestionCount] = useState(5);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [isReadingAloud, setIsReadingAloud] = useState(false);
+  const [transcribedText, setTranscribedText] = useState('');
+  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recordingControlRef = useRef<{ startRecording: () => void; stopRecording: () => void } | null>(null);
   
   const navigate = useNavigate();
+
+  useEffect(() => {
+    return () => {
+      // Clean up any audio when component unmounts
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   // Handle PDF upload
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,11 +93,41 @@ const SmartNotes = () => {
   // Recording functionality
   const toggleRecording = () => {
     if (!isRecording) {
-      setIsRecording(true);
-      toast.info("Voice recording started");
+      startRecording();
     } else {
-      setIsRecording(false);
-      toast.info("Voice recording stopped");
+      stopRecording();
+    }
+  };
+
+  const startRecording = () => {
+    setIsRecording(true);
+    toast.info("Voice recording started");
+    
+    const { startRecording, stopRecording } = startRealTimeTranscription({
+      onProgress: (text) => {
+        setTranscribedText((prev) => prev + " " + text);
+      },
+      onComplete: (text) => {
+        setNote((prev) => prev ? `${prev}\n\n${text}` : text);
+        setTranscribedText('');
+        toast.success('Recording transcribed and added to notes');
+      },
+      onError: (error) => {
+        toast.error(`Recording error: ${error.message}`);
+        setIsRecording(false);
+      }
+    });
+    
+    recordingControlRef.current = { startRecording, stopRecording };
+    startRecording();
+  };
+
+  const stopRecording = () => {
+    setIsRecording(false);
+    toast.info("Voice recording stopped");
+    
+    if (recordingControlRef.current) {
+      recordingControlRef.current.stopRecording();
     }
   };
 
@@ -169,6 +219,58 @@ const SmartNotes = () => {
     setFlashcardFront(!flashcardFront);
   };
 
+  const handleReadAloud = async () => {
+    if (isReadingAloud) {
+      // Stop reading
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setIsReadingAloud(false);
+      return;
+    }
+    
+    const textToRead = note || summary;
+    if (!textToRead) {
+      toast.error("No content to read");
+      return;
+    }
+    
+    setIsReadingAloud(true);
+    
+    try {
+      // Generate audio from ElevenLabs
+      const audioUrl = await textToSpeech({ 
+        text: textToRead.length > 5000 ? textToRead.substring(0, 5000) + "... Text truncated for audio generation." : textToRead 
+      });
+      
+      if (!audioUrl) {
+        throw new Error("Failed to generate audio");
+      }
+      
+      // Play audio
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      
+      audio.onended = () => {
+        setIsReadingAloud(false);
+        audioRef.current = null;
+      };
+      
+      audio.onerror = () => {
+        toast.error("Error playing audio");
+        setIsReadingAloud(false);
+        audioRef.current = null;
+      };
+      
+      audio.play();
+    } catch (error) {
+      console.error("Error generating audio:", error);
+      toast.error("Failed to generate audio");
+      setIsReadingAloud(false);
+    }
+  };
+
   return (
     <PageTransition>
       <div className="container mx-auto p-4">
@@ -192,6 +294,10 @@ const SmartNotes = () => {
               {isRecording ? <MicOff className="mr-2 h-4 w-4" /> : <Mic className="mr-2 h-4 w-4" />}
               {isRecording ? "Stop" : "Record"}
             </Button>
+            <Button onClick={handleReadAloud} variant={isReadingAloud ? "default" : "outline"}>
+              {isReadingAloud ? <VolumeX className="mr-2 h-4 w-4" /> : <Volume2 className="mr-2 h-4 w-4" />}
+              {isReadingAloud ? "Stop" : "Read Aloud"}
+            </Button>
             <div>
               <Input 
                 type="file" 
@@ -207,6 +313,13 @@ const SmartNotes = () => {
             </div>
           </div>
         </div>
+
+        {transcribedText && (
+          <div className="bg-amber-50 dark:bg-amber-900 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
+            <p className="font-medium mb-1">Transcribing...</p>
+            <p className="text-gray-600 dark:text-gray-300">{transcribedText}</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="col-span-1 lg:col-span-2">

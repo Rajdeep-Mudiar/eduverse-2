@@ -1,8 +1,11 @@
+
 import { toast } from "sonner";
 
-// Gemini API key
+// API keys
 const GEMINI_API_KEY = "AIzaSyBQw_aZH8STLIWryaFgWJoBycfRTGwATiM";
-const API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent";
+const OPENAI_API_KEY = "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";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent";
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 export interface GeminiResponse {
   text: string;
@@ -30,7 +33,7 @@ export interface GeminiFlashcard {
 
 export const generateContent = async (params: GeminiParams): Promise<GeminiResponse> => {
   try {
-    const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -71,6 +74,46 @@ export const generateContent = async (params: GeminiParams): Promise<GeminiRespo
     console.error("Error calling Gemini API:", error);
     toast.error("Failed to connect to AI service");
     return { text: "", error: "Network error" };
+  }
+};
+
+export const generateWithOpenAI = async (prompt: string, model = "gpt-4o-mini"): Promise<string> => {
+  try {
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful AI assistant focusing on education."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error("OpenAI API error:", data);
+      throw new Error(data.error?.message || "Failed to generate content");
+    }
+
+    return data.choices[0]?.message?.content || "";
+  } catch (error) {
+    console.error("Error calling OpenAI API:", error);
+    toast.error("Failed to connect to OpenAI service");
+    return "";
   }
 };
 
@@ -156,26 +199,39 @@ export const generateFlashcards = async (content: string, count: number = 5): Pr
 };
 
 export const generateSummary = async (text: string): Promise<string> => {
-  const prompt = `Summarize the following text in a concise and informative manner:
-  "${text.substring(0, 3000)}..."
-  
-  Provide a clear and structured summary that captures the key points.`;
-
   try {
-    const response = await generateContent({
-      prompt,
-      temperature: 0.3, // Lower temperature for more focused summary
-    });
-
-    if (response.error) {
-      throw new Error(response.error);
-    }
-
-    return response.text;
+    // Try with OpenAI first for better quality summaries
+    const prompt = `Summarize the following text in a concise and informative manner:
+    "${text.substring(0, 3000)}..."
+    
+    Provide a clear and structured summary that captures the key points.`;
+    
+    return await generateWithOpenAI(prompt);
   } catch (error) {
-    console.error("Error generating summary:", error);
-    toast.error("Failed to generate summary");
-    return "";
+    console.error("Error generating summary with OpenAI, falling back to Gemini:", error);
+    
+    // Fallback to Gemini
+    const prompt = `Summarize the following text in a concise and informative manner:
+    "${text.substring(0, 3000)}..."
+    
+    Provide a clear and structured summary that captures the key points.`;
+
+    try {
+      const response = await generateContent({
+        prompt,
+        temperature: 0.3, // Lower temperature for more focused summary
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      return response.text;
+    } catch (geminiError) {
+      console.error("Error generating summary with Gemini:", geminiError);
+      toast.error("Failed to generate summary");
+      return "";
+    }
   }
 };
 
@@ -197,24 +253,36 @@ export const extractTextFromPDF = async (pdfArrayBuffer: ArrayBuffer): Promise<s
 };
 
 export const generateAIResponse = async (userMessage: string): Promise<string> => {
-  const prompt = `You are a helpful AI tutor assistant. The user says: "${userMessage}"
-  
-  Provide a helpful, informative and educational response. Be concise but thorough.`;
-
   try {
-    const response = await generateContent({
-      prompt,
-      temperature: 0.7,
-    });
-
-    if (response.error) {
-      throw new Error(response.error);
-    }
-
-    return response.text;
+    // Try with OpenAI first for better quality responses
+    const prompt = `You are a helpful AI tutor assistant. The user says: "${userMessage}"
+    
+    Provide a helpful, informative and educational response. Be concise but thorough.`;
+    
+    return await generateWithOpenAI(prompt);
   } catch (error) {
-    console.error("Error generating AI response:", error);
-    toast.error("Failed to generate AI response");
-    return "I'm sorry, I couldn't process your request at the moment. Please try again later.";
+    console.error("Error generating AI response with OpenAI, falling back to Gemini:", error);
+    
+    // Fallback to Gemini
+    const prompt = `You are a helpful AI tutor assistant. The user says: "${userMessage}"
+    
+    Provide a helpful, informative and educational response. Be concise but thorough.`;
+
+    try {
+      const response = await generateContent({
+        prompt,
+        temperature: 0.7,
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      return response.text;
+    } catch (geminiError) {
+      console.error("Error generating AI response with Gemini:", geminiError);
+      toast.error("Failed to generate AI response");
+      return "I'm sorry, I couldn't process your request at the moment. Please try again later.";
+    }
   }
 };
