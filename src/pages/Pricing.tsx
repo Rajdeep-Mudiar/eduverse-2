@@ -58,7 +58,7 @@ const Pricing = () => {
       badge: null,
     },
     {
-      name: "Plus",
+      name: "Gold",
       description: "Enhanced learning experience for dedicated students",
       monthlyPrice: 9.99,
       features: [
@@ -82,7 +82,7 @@ const Pricing = () => {
       badge: "Popular",
     },
     {
-      name: "Premium",
+      name: "Plus",
       description: "Complete learning toolkit for serious students",
       monthlyPrice: 19.99,
       features: [
@@ -106,7 +106,7 @@ const Pricing = () => {
       badge: null,
     },
     {
-      name: "Gold",
+      name: "Premium",
       description: "Ultimate learning experience with exclusive benefits",
       monthlyPrice: 49.99,
       features: [
