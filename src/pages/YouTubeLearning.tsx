@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Search, Play, Bookmark, Star, Clock, Flame, BookOpen, Code, Lightbulb, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -39,13 +38,11 @@ const YouTubeLearning = () => {
   ];
 
   useEffect(() => {
-    // Load saved videos from local storage
     const saved = localStorage.getItem('eduverse_saved_videos');
     if (saved) {
       setSavedVideos(JSON.parse(saved));
     }
 
-    // Load initial videos
     searchVideos('educational videos for students');
   }, []);
 
@@ -56,7 +53,6 @@ const YouTubeLearning = () => {
     try {
       let finalQuery = query;
       if (category !== 'all') {
-        // Ensure better category matching by using the full category label
         const categoryLabel = categories.find(cat => cat.value === category)?.label || '';
         finalQuery = `${query} ${categoryLabel} educational`;
       }
@@ -72,7 +68,6 @@ const YouTubeLearning = () => {
       const data = await response.json();
       const videoIds = data.items.map((item: any) => item.id.videoId).join(',');
       
-      // Get additional video details including duration
       const detailsResponse = await fetch(
         `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=${videoIds}&key=${YOUTUBE_API_KEY}`
       );
@@ -128,6 +123,7 @@ const YouTubeLearning = () => {
 
   const playVideo = (video: YouTubeVideo) => {
     setActiveVideo(video);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const saveVideo = (video: YouTubeVideo) => {
@@ -163,7 +159,7 @@ const YouTubeLearning = () => {
                   <iframe
                     width="100%"
                     height="100%"
-                    src={`https://www.youtube.com/embed/${activeVideo.id}`}
+                    src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1`}
                     title={activeVideo.title}
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -253,7 +249,10 @@ const YouTubeLearning = () => {
                             {video.duration}
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 hover:opacity-100">
+                        <div 
+                          className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer"
+                          onClick={() => playVideo(video)}
+                        >
                           <Play className="h-10 w-10 text-white" />
                         </div>
                       </div>
@@ -270,7 +269,10 @@ const YouTubeLearning = () => {
                             variant="ghost" 
                             size="sm"
                             className={isSaved(video.id) ? "text-yellow-500" : ""}
-                            onClick={() => saveVideo(video)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              saveVideo(video);
+                            }}
                           >
                             <Bookmark className="h-4 w-4" />
                           </Button>
